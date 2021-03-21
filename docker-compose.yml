@@ -1,0 +1,35 @@
+version: "3"
+
+services:
+  crypto-trading:
+    container_name: binance_trader
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+  api:
+    image: edeng23/binance-trade-bot
+    container_name: binance_trader_api
+    volumes:
+      - ./:/app/
+    ports:
+      - 5123:5123
+    environment:
+      - API_KEY=WrT8uM6ATxTRwS3wvioOAEmwILYS9zuu9LDQ8ayF2gMJBPE9oPJ5ifZWtsoWHHt2
+      - API_SECRET_KEY=LRAGmJmZBad3Mwv71ccYFX6BL9TXpIMVEFp0rKW3XeoliD8EwuyGqsYqOHBJpMwS
+    command: gunicorn binance_trade_bot.api_server:app -k eventlet -w 1 --threads 1 -b 0.0.0.0:5123
+    depends_on:
+      - crypto-trading
+
+  sqlitebrowser:
+    image: ghcr.io/linuxserver/sqlitebrowser
+    container_name: sqlitebrowser
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - ./data/config:/config
+      - ./data:/data
+    ports:
+      - 3000:3000
